@@ -18,15 +18,26 @@ package org.apache.rocketmq.client.impl.producer;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.rocketmq.client.common.ThreadLocalIndex;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.route.QueueData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 
 public class TopicPublishInfo {
+    /**
+     * 是否顺序消息
+     */
     private boolean orderTopic = false;
+
     private boolean haveTopicRouterInfo = false;
+    /**
+     * 消息队列
+     */
     private List<MessageQueue> messageQueueList = new ArrayList<MessageQueue>();
+    /**
+     * 用于控制对队列的选择，每一次选择消息队列，值+1
+     */
     private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
     private TopicRouteData topicRouteData;
 
@@ -106,7 +117,7 @@ public class TopicPublishInfo {
     @Override
     public String toString() {
         return "TopicPublishInfo [orderTopic=" + orderTopic + ", messageQueueList=" + messageQueueList
-            + ", sendWhichQueue=" + sendWhichQueue + ", haveTopicRouterInfo=" + haveTopicRouterInfo + "]";
+                + ", sendWhichQueue=" + sendWhichQueue + ", haveTopicRouterInfo=" + haveTopicRouterInfo + "]";
     }
 
     public TopicRouteData getTopicRouteData() {

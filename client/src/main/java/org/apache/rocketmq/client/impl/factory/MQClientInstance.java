@@ -176,6 +176,7 @@ public class MQClientInstance {
             List<QueueData> qds = route.getQueueDatas();
             Collections.sort(qds);
             for (QueueData qd : qds) {
+                // 判断队列是否为写队列
                 if (PermName.isWriteable(qd.getPerm())) {
                     BrokerData brokerData = null;
                     for (BrokerData bd : route.getBrokerDatas()) {
@@ -193,6 +194,7 @@ public class MQClientInstance {
                         continue;
                     }
 
+                    // 根据写队列的数量，创建队列，队列名称是 topic+num
                     for (int i = 0; i < qd.getWriteQueueNums(); i++) {
                         MessageQueue mq = new MessageQueue(topic, qd.getBrokerName(), i);
                         info.getMessageQueueList().add(mq);
@@ -619,9 +621,11 @@ public class MQClientInstance {
                             }
                         }
                     } else {
+                        // 从 nameServer 获取路由信息
                         topicRouteData = this.mQClientAPIImpl.getTopicRouteInfoFromNameServer(topic, 1000 * 3);
                     }
                     if (topicRouteData != null) {
+                        // 对比变化
                         TopicRouteData old = this.topicRouteTable.get(topic);
                         boolean changed = topicRouteDataIsChange(old, topicRouteData);
                         if (!changed) {
@@ -637,7 +641,7 @@ public class MQClientInstance {
                                 this.brokerAddrTable.put(bd.getBrokerName(), bd.getBrokerAddrs());
                             }
 
-                            // Update Pub info
+                            // 更新 topic 发布信息
                             {
                                 TopicPublishInfo publishInfo = topicRouteData2TopicPublishInfo(topic, topicRouteData);
                                 publishInfo.setHaveTopicRouterInfo(true);

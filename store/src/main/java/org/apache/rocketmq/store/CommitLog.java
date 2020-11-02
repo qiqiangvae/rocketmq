@@ -556,7 +556,7 @@ public class CommitLog {
     }
 
     public CompletableFuture<PutMessageResult> asyncPutMessage(final MessageExtBrokerInner msg) {
-        // Set the storage time
+        // 设置存储时间
         msg.setStoreTimestamp(System.currentTimeMillis());
         // Set the message body BODY CRC (consider the most appropriate setting
         // on the client)
@@ -1544,11 +1544,7 @@ public class CommitLog {
             keyBuilder.append('-');
             keyBuilder.append(msgInner.getQueueId());
             String key = keyBuilder.toString();
-            Long queueOffset = CommitLog.this.topicQueueTable.get(key);
-            if (null == queueOffset) {
-                queueOffset = 0L;
-                CommitLog.this.topicQueueTable.put(key, queueOffset);
-            }
+            long queueOffset = CommitLog.this.topicQueueTable.computeIfAbsent(key, k -> 0L);
 
             // Transaction messages that require special handling
             final int tranType = MessageSysFlag.getTransactionValue(msgInner.getSysFlag());

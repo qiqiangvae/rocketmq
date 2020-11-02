@@ -42,6 +42,9 @@ import org.apache.rocketmq.store.util.LibC;
 import sun.nio.ch.DirectBuffer;
 
 public class MappedFile extends ReferenceResource {
+    /**
+     * 操作系统每页大小，默认4k
+     */
     public static final int OS_PAGE_SIZE = 1024 * 4;
     protected static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 

@@ -66,20 +66,44 @@ import org.apache.rocketmq.store.stats.BrokerStatsManager;
 public class DefaultMessageStore implements MessageStore {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
+    /**
+     * 消息存储配置
+     */
     private final MessageStoreConfig messageStoreConfig;
-    // CommitLog
+    /**
+     * CommitLog 文件的存储实现类
+     */
     private final CommitLog commitLog;
 
-    private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
+    /**
+     * 消息队列存储缓存表
+     * key -> topic
+     */
+    private final ConcurrentMap<String, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
 
+    /**
+     * 消息队列文件 ConsumeQueue 刷盘线程
+     */
     private final FlushConsumeQueueService flushConsumeQueueService;
 
+    /**
+     * 清除 CommitLog 文件的服务
+     */
     private final CleanCommitLogService cleanCommitLogService;
 
+    /**
+     * 清除 ConsumeQueue 的服务
+     */
     private final CleanConsumeQueueService cleanConsumeQueueService;
 
+    /**
+     * 索引文件实现类
+     */
     private final IndexService indexService;
 
+    /**
+     * MappedFile 分配服务
+     */
     private final AllocateMappedFileService allocateMappedFileService;
 
     private final ReputMessageService reputMessageService;
@@ -357,11 +381,12 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     private PutMessageStatus checkMessage(MessageExtBrokerInner msg) {
+        // 检查 topic 长度是否合法
         if (msg.getTopic().length() > Byte.MAX_VALUE) {
             log.warn("putMessage message topic length too long " + msg.getTopic().length());
             return PutMessageStatus.MESSAGE_ILLEGAL;
         }
-
+        // 检查消息属性长度是否合法
         if (msg.getPropertiesString() != null && msg.getPropertiesString().length() > Short.MAX_VALUE) {
             log.warn("putMessage message properties length too long " + msg.getPropertiesString().length());
             return PutMessageStatus.MESSAGE_ILLEGAL;
@@ -388,7 +413,7 @@ public class DefaultMessageStore implements MessageStore {
             log.warn("message store has shutdown, so putMessage is forbidden");
             return PutMessageStatus.SERVICE_NOT_AVAILABLE;
         }
-
+        // slave 角色不支持写入
         if (BrokerRole.SLAVE == this.messageStoreConfig.getBrokerRole()) {
             long value = this.printTimes.getAndIncrement();
             if ((value % 50000) == 0) {
@@ -396,7 +421,7 @@ public class DefaultMessageStore implements MessageStore {
             }
             return PutMessageStatus.SERVICE_NOT_AVAILABLE;
         }
-
+        // 当前 broker 不支持写入
         if (!this.runningFlags.isWriteable()) {
             long value = this.printTimes.getAndIncrement();
             if ((value % 50000) == 0) {
@@ -475,11 +500,12 @@ public class DefaultMessageStore implements MessageStore {
 
     @Override
     public PutMessageResult putMessage(MessageExtBrokerInner msg) {
+        // 检查状态，是否可以写入
         PutMessageStatus checkStoreStatus = this.checkStoreStatus();
         if (checkStoreStatus != PutMessageStatus.PUT_OK) {
             return new PutMessageResult(checkStoreStatus, null);
         }
-
+        // 消息状态，判断消息是否合法
         PutMessageStatus msgCheckStatus = this.checkMessage(msg);
         if (msgCheckStatus == PutMessageStatus.MESSAGE_ILLEGAL) {
             return new PutMessageResult(msgCheckStatus, null);
